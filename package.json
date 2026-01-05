@@ -37,7 +37,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:types": "vitest typecheck",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "publish:local": "yalc publish"
   },
   "keywords": [
     "state-machine",
