@@ -1,0 +1,10 @@
+services:
+  psql:
+    image: postgres:18
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "transito"
+      POSTGRES_USER: "transito"
+      POSTGRES_PASSWORD: "transito_password"
