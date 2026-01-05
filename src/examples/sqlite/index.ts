@@ -1,11 +1,11 @@
 import { v7 as uuidv7 } from "uuid";
-import { withDrizzle } from "../../adapters/drizzle/sqlite.js";
+import { withDrizzleSQLite } from "../../adapters/drizzle/sqlite.js";
 import { subscribeMachineConfig } from "../subscribe-machine-config.js";
 import { closeDb, db } from "./db.js";
 
 import { subscriptionsTable } from "./schema.js";
 
-const subscriptionMachine = withDrizzle(subscribeMachineConfig, {
+const subscriptionMachine = withDrizzleSQLite(subscribeMachineConfig, {
   db,
   table: subscriptionsTable,
 });

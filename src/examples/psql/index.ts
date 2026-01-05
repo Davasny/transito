@@ -1,10 +1,10 @@
 import { v7 as uuidv7 } from "uuid";
-import { withDrizzle } from "../../adapters/drizzle/pg.js";
+import { withDrizzlePg } from "../../adapters/drizzle/pg.js";
 import { subscribeMachineConfig } from "../subscribe-machine-config.js";
 import { db } from "./db.js";
 import { subscriptionsTable } from "./schema.js";
 
-const subscriptionMachine = withDrizzle(subscribeMachineConfig, {
+const subscriptionMachine = withDrizzlePg(subscribeMachineConfig, {
   db,
   table: subscriptionsTable,
 });

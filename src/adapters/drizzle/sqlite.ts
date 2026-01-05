@@ -1,15 +1,15 @@
 import type { SQLiteTableWithColumns } from "drizzle-orm/sqlite-core";
 import type { BoundMachine, MachineDefinition } from "../../types.js";
 import {
-  type DrizzleAdapterConfig,
-  type ValidateContext,
-  DrizzleAdapter,
   BoundMachineImpl,
+  DrizzleAdapter,
+  type DrizzleAdapterConfig,
   SYSTEM_FIELDS,
+  type ValidateContext,
 } from "./core.js";
 
 // ============================================================
-// SQLite-specific withDrizzle
+// SQLite-specific withDrizzleSQLite
 // ============================================================
 
 /**
@@ -23,7 +23,7 @@ import {
  * @example
  * ```ts
  * import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
- * import { withDrizzle } from "transito/drizzle/sqlite";
+ * import { withDrizzleSQLite } from "transito/drizzle/sqlite";
  *
  * const subscriptionsTable = sqliteTable("subscriptions", {
  *   id: text("id").primaryKey(),
@@ -33,7 +33,7 @@ import {
  *   stripeCustomerId: text("stripe_customer_id"),
  * });
  *
- * const boundMachine = withDrizzle(subscriptionMachine, {
+ * const boundMachine = withDrizzleSQLite(subscriptionMachine, {
  *   db,
  *   table: subscriptionsTable,
  * });
@@ -41,12 +41,12 @@ import {
  * const actor = await boundMachine.createActor("sub_123", { stripeCustomerId: null });
  * ```
  */
-// biome-ignore lint/suspicious/noExplicitAny: SQLiteTableWithColumns requires generic parameter
-export function withDrizzle<
+export function withDrizzleSQLite<
   TContext,
   TStates extends string,
   TEvents extends string,
   TStateNodes,
+  // biome-ignore lint/suspicious/noExplicitAny: SQLiteTableWithColumns requires generic parameter
   TTable extends SQLiteTableWithColumns<any>,
 >(
   machineDefinition: MachineDefinition<TContext, TStates, TEvents, TStateNodes>,

@@ -1,15 +1,15 @@
-import type { PgTable, TableConfig } from "drizzle-orm/pg-core";
-import type { BoundMachine, MachineDefinition } from "../../types.js";
+import type { PgTable } from "drizzle-orm/pg-core";
+import type { BoundMachine, MachineDefinition } from "../../types";
 import {
-  type DrizzleAdapterConfig,
-  type ValidateContext,
-  DrizzleAdapter,
   BoundMachineImpl,
+  DrizzleAdapter,
+  type DrizzleAdapterConfig,
   SYSTEM_FIELDS,
-} from "./core.js";
+  type ValidateContext,
+} from "./core";
 
 // ============================================================
-// PostgreSQL-specific withDrizzle
+// PostgreSQL-specific withDrizzlePg
 // ============================================================
 
 /**
@@ -23,7 +23,7 @@ import {
  * @example
  * ```ts
  * import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
- * import { withDrizzle } from "transito/drizzle/pg";
+ * import { withDrizzlePg } from "transito/drizzle/pg";
  *
  * const subscriptionsTable = pgTable("subscriptions", {
  *   id: uuid().primaryKey(),
@@ -33,7 +33,7 @@ import {
  *   stripeCustomerId: text(),
  * });
  *
- * const boundMachine = withDrizzle(subscriptionMachine, {
+ * const boundMachine = withDrizzlePg(subscriptionMachine, {
  *   db,
  *   table: subscriptionsTable,
  * });
@@ -41,12 +41,12 @@ import {
  * const actor = await boundMachine.createActor("sub_123", { stripeCustomerId: null });
  * ```
  */
-export function withDrizzle<
+export function withDrizzlePg<
   TContext,
   TStates extends string,
   TEvents extends string,
   TStateNodes,
-  TTable extends PgTable<TableConfig>,
+  TTable extends PgTable,
 >(
   machineDefinition: MachineDefinition<TContext, TStates, TEvents, TStateNodes>,
   config: DrizzleAdapterConfig<TTable> &

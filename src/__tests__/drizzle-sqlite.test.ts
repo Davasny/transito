@@ -1,6 +1,6 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { withDrizzle } from "../adapters/drizzle/sqlite.js";
+import { withDrizzleSQLite } from "../adapters/drizzle/sqlite.js";
 import { ActorAlreadyExistsError } from "../errors.js";
 import { machine } from "../machine.js";
 
@@ -102,7 +102,7 @@ function createMockDb() {
   return mockDb;
 }
 
-describe("withDrizzle() - SQLite", () => {
+describe("withDrizzleSQLite() - SQLite", () => {
   let mockDb: ReturnType<typeof createMockDb>;
 
   beforeEach(() => {
@@ -111,7 +111,7 @@ describe("withDrizzle() - SQLite", () => {
 
   describe("createActor()", () => {
     it("creates a new actor with initial state and context", async () => {
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzleSQLite(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -127,7 +127,7 @@ describe("withDrizzle() - SQLite", () => {
     });
 
     it("persists the new actor via db.insert", async () => {
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzleSQLite(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -159,7 +159,7 @@ describe("withDrizzle() - SQLite", () => {
         "sub_123",
       );
 
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzleSQLite(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -175,7 +175,7 @@ describe("withDrizzle() - SQLite", () => {
 
   describe("getActor()", () => {
     it("returns null when actor does not exist", async () => {
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzleSQLite(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -201,7 +201,7 @@ describe("withDrizzle() - SQLite", () => {
         "sub_123",
       );
 
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzleSQLite(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -231,7 +231,7 @@ describe("withDrizzle() - SQLite", () => {
         }),
       };
 
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzleSQLite(testMachine, {
         db: trackingMockDb,
         table: subscriptionsTable,
       });
@@ -256,7 +256,7 @@ describe("withDrizzle() - SQLite", () => {
 
 describe("SQLite Type validation", () => {
   it("accepts matching context and SQLite table types", () => {
-    const _boundMachine = withDrizzle(testMachine, {
+    const _boundMachine = withDrizzleSQLite(testMachine, {
       db: createMockDb(),
       table: subscriptionsTable,
     });

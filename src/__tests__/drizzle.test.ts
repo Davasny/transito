@@ -1,6 +1,6 @@
 import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { withDrizzle } from "../adapters/drizzle/pg.js";
+import { withDrizzlePg } from "../adapters/drizzle/pg.js";
 import { ActorAlreadyExistsError } from "../errors.js";
 import { machine } from "../machine.js";
 
@@ -111,7 +111,7 @@ function createMockDb() {
   return mockDb;
 }
 
-describe("withDrizzle()", () => {
+describe("withDrizzleSQLite()", () => {
   let mockDb: ReturnType<typeof createMockDb>;
 
   beforeEach(() => {
@@ -120,7 +120,7 @@ describe("withDrizzle()", () => {
 
   describe("createActor()", () => {
     it("creates a new actor with initial state and context", async () => {
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzlePg(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -136,7 +136,7 @@ describe("withDrizzle()", () => {
     });
 
     it("persists the new actor via db.insert", async () => {
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzlePg(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -169,7 +169,7 @@ describe("withDrizzle()", () => {
         "sub_123",
       );
 
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzlePg(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -185,7 +185,7 @@ describe("withDrizzle()", () => {
 
   describe("getActor()", () => {
     it("returns null when actor does not exist", async () => {
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzlePg(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -212,7 +212,7 @@ describe("withDrizzle()", () => {
         "sub_123",
       );
 
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzlePg(testMachine, {
         db: mockDb,
         table: subscriptionsTable,
       });
@@ -243,7 +243,7 @@ describe("withDrizzle()", () => {
         }),
       };
 
-      const boundMachine = withDrizzle(testMachine, {
+      const boundMachine = withDrizzlePg(testMachine, {
         db: trackingMockDb,
         table: subscriptionsTable,
       });
@@ -269,7 +269,7 @@ describe("withDrizzle()", () => {
 describe("Type validation", () => {
   it("accepts matching context and table types", () => {
     // This should compile without errors
-    const _boundMachine = withDrizzle(testMachine, {
+    const _boundMachine = withDrizzlePg(testMachine, {
       db: createMockDb(),
       table: subscriptionsTable,
     });
