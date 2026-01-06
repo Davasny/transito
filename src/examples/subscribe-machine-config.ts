@@ -25,6 +25,9 @@ export const subscribeMachineConfig = machine<SubContext>().define({
       onSuccess: {
         target: "active",
       },
+      onError: {
+        target: "activation_failed",
+      },
     },
     activation_failed: {
       on: {
