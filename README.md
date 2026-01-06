@@ -1,154 +1,123 @@
 # machin
 
-Modern TypeScript state machines with first class persistency support.
+<p align="center">
+TypeScript state machines with built-in persistence.
+</p>
 
-## Getting started
+<p align="center">
+  <a href="https://www.npmjs.com/package/machin"><img alt="npm" src="https://img.shields.io/npm/v/machin?style=flat-square" /></a>
+  <a href="https://github.com/Davasny/machin/actions/workflows/release.yml">
+    <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/Davasny/machin/release.yml?style=flat-square" />
+  </a>
+  <img alt="License" src="https://img.shields.io/npm/l/machin?style=flat-square" />
+</p>
 
-- pnpm
+---
 
-```bash
-pnpm add machin
-```
+State machines are great for modeling complex workflows. But persisting them usually means gluing together a state machine library, a database layer, and custom sync logic.
 
-- yarn
+machin handles both. Define your machine, pick a storage adapter, and your state transitions are automatically persisted. No manual saves, no sync bugs.
 
-```bash
-yarn add machin
-```
+## Features
 
-- npm
+- Awaitable by design
+- Postgres, SQLite, and Redis adapters included
+- Full TypeScript inference for states, events, and context
+
+## Installation
 
 ```bash
 npm install machin
 ```
 
-## Usage
+```bash
+pnpm add machin
+```
 
-### drizzle with postgres
+```bash
+yarn add machin
+```
+
+## Quick example
 
 ```typescript
-// define schema
-export const subscriptionsTable = pgTable("subscriptions", {
-  /* fields required by machin */
-  id: text()
-    .primaryKey()
-    .$defaultFn(() => uuidv7()),
-  state: text().notNull(),
-  createdAt: timestamp().notNull(),
-  updatedAt: timestamp().notNull(),
+import { machine } from "machin";
+import { withDrizzlePg } from "machin/drizzle/pg";
 
-  /* machine context */
-  stripeCustomerId: text(),
-});
+type Context = { customerId: string | null };
 
-
-// define machine config
-import { machine } from "@/machine.js";
-
-type SubContext = { stripeCustomerId: string | null };
-
-export const subscribeMachineConfig = machine<SubContext>().define({
-  initial: "inactive",
+// Define your machine
+const orderMachine = machine<Context>().define({
+  initial: "pending",
   states: {
-    inactive: {
-      on: {
-        activate: {
-          target: "activating",
-        },
-      },
+    pending: {
+      on: { confirm: { target: "processing" } },
     },
-    activating: {
-      entry: async (ctx, event: { stripeCustomerId: string }) => {
-        console.log(`Activating subscription for customer: ${event.stripeCustomerId}`);
-
-        // entry() method should return new context object
-        return {
-          ...ctx,
-          stripeCustomerId: event.stripeCustomerId,
-        };
+    processing: {
+      entry: async (ctx, event: { customerId: string }) => {
+        // Do async work here
+        return { ...ctx, customerId: event.customerId };
       },
-      onSuccess: {
-        target: "active",
-      },
-      onError: {
-        target: "activation_failed",
-      },
+      onSuccess: { target: "completed" },
+      onError: { target: "failed" },
     },
-    activation_failed: {
-      on: {
-        retry: {
-          target: "activating",
-        },
-      },
-    },
-    active: {
-      on: {
-        deactivate: {
-          target: "inactive",
-        },
-      },
+    completed: {},
+    failed: {
+      on: { retry: { target: "processing" } },
     },
   },
 });
 
+// Bind to storage
+const boundMachine = withDrizzlePg(orderMachine, { db, table: ordersTable });
 
-// bind machine to storage driver
-const subscriptionMachine = withDrizzlePg(subscribeMachineConfig, {
-  db,
-  table: subscriptionsTable,
-});
+// Create an actor and send events
+const actor = await boundMachine.createActor("order-123", { customerId: null });
+await actor.send("confirm", { customerId: "customer-456" });
 
-// get actor
-const actor = await subscriptionMachine.createActor("subscriber-id", {
-  stripeCustomerId: null,
-});
-
-// send event to actor
-const activateResult = await actor.send("activate", {
-  stripeCustomerId: "cus_123",
-});
+console.log(actor.state); // "completed"
 ```
 
-## Supported storage
+State is persisted automatically after each transition.
 
-### postgres via [drizzle](https://orm.drizzle.team/docs/get-started-postgresql)
+## Storage adapters
+
+### Postgres
 
 ```typescript
 import { withDrizzlePg } from "machin/drizzle/pg";
 
-const machine = withDrizzlePg(machineConfig, {
-  db,
-  table: machineTable,
-});
+const machine = withDrizzlePg(machineConfig, { db, table: myTable });
 ```
 
-### sqlite via [drizzle](https://orm.drizzle.team/docs/get-started-sqlite)
+### SQLite
 
 ```typescript
 import { withDrizzleSQLite } from "machin/drizzle/sqlite";
 
-const machine = withDrizzleSQLite(machineConfig, {
-  db,
-  table: machineTable,
-});
+const machine = withDrizzleSQLite(machineConfig, { db, table: myTable });
 ```
 
-### redis via [node-redis](https://github.com/redis/node-redis)
+### Redis
 
 ```typescript
 import { createClient } from "redis";
-import { withRedis } from "machin/redis"
+import { withRedis } from "machin/redis";
 
-const client = await createClient({
-  url: "redis://localhost:6379",
-})
-  .on("error", (err) => console.log("Redis Client Error", err))
-  .connect();
-
-const subscriptionMachine = withRedis(subscribeMachineConfig, {
-  client,
-});
+const client = await createClient({ url: "redis://localhost:6379" }).connect();
+const machine = withRedis(machineConfig, { client });
 ```
+
+## Table schema
+
+Your table needs these columns:
+
+- `id` (text, primary key)
+- `state` (text)
+- `createdAt` (timestamp)
+- `updatedAt` (timestamp)
+
+Plus any columns for your context fields.
 
 ## License
 
