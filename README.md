@@ -1,4 +1,4 @@
-# machine
+# machin
 
 Modern TypeScript state machines with first class persistency support.
 
