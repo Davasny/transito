@@ -1,7 +1,6 @@
 {
-  "name": "transito",
-  "version": "0.1.0",
   "name": "machin",
+  "version": "1.0.0-rc1",
   "description": "TypeScript state machine library with first-class persistence support",
   "type": "module",
   "main": "./dist/index.js",

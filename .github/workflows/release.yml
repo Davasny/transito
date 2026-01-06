@@ -1,0 +1,107 @@
+name: Release
+run-name: Release v${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.2.0 or 0.2.0-rc1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate version
+        run: |
+          NEW_VERSION="${{ inputs.version }}"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          
+          # Check if new version is valid semver
+          if ! npx semver "$NEW_VERSION" > /dev/null 2>&1; then
+            echo "::error::Invalid semver: $NEW_VERSION"
+            exit 1
+          fi
+          
+          # Check if new version is greater than current
+          if ! npx semver "$NEW_VERSION" -gt "$CURRENT_VERSION" > /dev/null 2>&1; then
+            echo "::error::New version ($NEW_VERSION) must be greater than current version ($CURRENT_VERSION)"
+            exit 1
+          fi
+          
+          echo "Version bump: $CURRENT_VERSION -> $NEW_VERSION"
+
+      - name: Type check
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Bump version
+        run: npm version ${{ inputs.version }} --no-git-tag-version
+
+      - name: Build
+        run: pnpm build
+
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4
+        id: changelog
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): v${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
+          git push --follow-tags
+
+      - name: Determine prerelease
+        id: prerelease
+        run: |
+          if [[ "${{ inputs.version }}" == *"-rc"* ]]; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "npm_tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "npm_tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          body: ${{ steps.changelog.outputs.content }}
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease == 'true' }}
+
+      - name: Publish to npm
+        run: pnpm publish --tag ${{ steps.prerelease.outputs.npm_tag }}
