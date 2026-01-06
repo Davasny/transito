@@ -32,11 +32,11 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Validate version
         run: node .github/scripts/validate-version.cjs ${{ inputs.version }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
         run: pnpm lint
